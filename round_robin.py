@@ -66,6 +66,13 @@ def main():
                 (d.get("firstName",""), d.get("lastName",""), d.get("phone","-"), d.get("email","-"), d.get("source","-"), an))
         try: api("POST","/contacts/"+cid+"/notes",{"body":note,"userId":aid})
         except Exception: pass
+        try:
+            import datetime as _dt
+            due = (_dt.datetime.utcnow()+_dt.timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            api("POST","/contacts/"+cid+"/tasks",{"title":"\U0001F4DE Contatta lead preview: "+(d.get("firstName","") or "nuovo lead"),
+                "body":"Lead Meta Preview Scuderia - contatta su WhatsApp entro 2h. Tel: "+(d.get("phone","-")),
+                "dueDate":due,"assignedTo":aid,"completed":False})
+        except Exception: pass
         print("ASSEGNATO", d.get("firstName",""), cid, "->", an)
     print("done, assegnati:", n)
 
