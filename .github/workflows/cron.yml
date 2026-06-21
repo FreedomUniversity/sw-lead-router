@@ -6,11 +6,17 @@ on:
 jobs:
   assign:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
-      - run: python round_robin.py
+      - name: Tally -> GHL bridge
+        run: python tally_to_ghl.py
+        env:
+          GHL_TOKEN: ${{ secrets.GHL_TOKEN }}
+          TALLY_TOKEN: ${{ secrets.TALLY_TOKEN }}
+      - name: Round-robin GHL (safety net)
+        run: python round_robin.py
         env:
           GHL_TOKEN: ${{ secrets.GHL_TOKEN }}
