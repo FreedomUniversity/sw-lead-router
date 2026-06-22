@@ -17,6 +17,11 @@ jobs:
           GHL_TOKEN: ${{ secrets.GHL_TOKEN }}
           TALLY_TOKEN: ${{ secrets.TALLY_TOKEN }}
           META_TOKEN: ${{ secrets.META_TOKEN }}
+      - name: Tally Media Buyer -> GHL
+        run: python media_buyer_to_ghl.py
+        env:
+          GHL_TOKEN: ${{ secrets.GHL_TOKEN }}
+          TALLY_TOKEN: ${{ secrets.TALLY_TOKEN }}
       - name: Round-robin GHL (safety net)
         run: python round_robin.py
         env:
