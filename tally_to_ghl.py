@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 """Bridge Tally -> GHL (upsert): legge le submission Preview, crea/aggiorna il contatto in GHL,
 assegna round-robin ai 5 advisor, tag + nota + task. Idempotente via tag 'preview-richiesta'."""
-import os, json, urllib.request, datetime
+import os, json, urllib.request, urllib.parse, datetime, hashlib, time
 GHL_TOKEN = os.environ.get("GHL_TOKEN") or open(os.path.expanduser("~/.config/ghl-token")).read().strip()
 TALLY_TOKEN = os.environ.get("TALLY_TOKEN") or open(os.path.expanduser("~/.config/tally-token")).read().strip()
+def _meta_token():
+    t=os.environ.get("META_TOKEN")
+    if t: return t.strip()
+    pth=os.path.expanduser("~/.config/scuderia-meta-creds")
+    if os.path.exists(pth): return open(pth).read().split("SCUDERIA_META_TOKEN=")[1].split("\n")[0].strip()
+    return ""
+META_TOKEN=_meta_token(); PIXEL="2001875973748821"
 LOC="HzkPpPNCqGDplfXVJAer"; FORM="zxgW1M"; GATE_MS=1782083269955
 ADV=[("zxoL3ZMecZpbtnvmiog5","Advisor 1"),("z0phvZrHszEiFz2ncUSi","Advisor 2"),
      ("ZLjQS4KP9lqRPRjqVKNl","Advisor 3"),("Fn5K8TNhVk7kmQn2ByZb","Advisor 4"),("DBp0ZYtxaGT476FFm6H1","Advisor 5")]
@@ -18,6 +25,22 @@ def hsh(s):
     x=0
     for ch in s: x=(x*31+ord(ch))&0xffffffff
     return x
+def fire_capi(email, phone, att):
+    if not META_TOKEN: return
+    def sha(x): return hashlib.sha256(str(x).strip().lower().encode()).hexdigest()
+    ud={}
+    if email: ud["em"]=[sha(email)]
+    if phone:
+        digits="".join(c for c in str(phone) if c.isdigit())
+        if digits: ud["ph"]=[sha(digits)]
+    if not ud: return
+    ev=[{"event_name":"Lead","event_time":int(time.time()),"action_source":"website",
+         "event_source_url":"https://tally.so/r/zxgW1M","user_data":ud,
+         "custom_data":{"content_name":"Preview sito","value":997,"currency":"EUR"}}]
+    data=urllib.parse.urlencode({"data":json.dumps(ev),"access_token":META_TOKEN}).encode()
+    r=urllib.request.Request("https://graph.facebook.com/v21.0/%s/events"%PIXEL,data=data,headers={"User-Agent":UA})
+    try: urllib.request.urlopen(r,timeout=20)
+    except Exception: pass
 def main():
     try: data=req("https://api.tally.so/forms/%s/submissions?limit=50"%FORM, TALLY_TOKEN)
     except Exception as e: print("ERR tally", e); return
@@ -89,6 +112,7 @@ def main():
             due=(datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
             ghl("POST","/contacts/"+cid+"/tasks",{"title":"\U0001F4DE Contatta lead preview: "+(att or fn),"body":"Lead Meta Preview - WhatsApp entro 2h. Tel: "+(phone or "-"),"dueDate":due,"assignedTo":aid,"completed":False})
         except Exception: pass
-        print("PROCESSATO", fn, "|", att, "->", an, "| cid", cid)
+        fire_capi(email, phone, att)
+        print("PROCESSATO", fn, "|", att, "->", an, "| cid", cid, "| CAPI Lead")
     print("done, lead processati:", n)
 if __name__=="__main__": main()

@@ -16,6 +16,7 @@ jobs:
         env:
           GHL_TOKEN: ${{ secrets.GHL_TOKEN }}
           TALLY_TOKEN: ${{ secrets.TALLY_TOKEN }}
+          META_TOKEN: ${{ secrets.META_TOKEN }}
       - name: Round-robin GHL (safety net)
         run: python round_robin.py
         env:
