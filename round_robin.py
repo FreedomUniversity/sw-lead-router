@@ -11,6 +11,8 @@ def get_token():
 
 TOKEN = get_token()
 LOC = "HzkPpPNCqGDplfXVJAer"
+PIPELINE = "7Zudd2lv0jtbqFHrfjiL"            # 03_BROAD
+STAGE = "c99cb342-f7de-4258-b2db-490ad37921ce"  # 01. Lead grezzo
 GATE_MS = 1782079191767  # solo lead creati dopo il go-live: protegge gli 8800+ contatti esistenti
 ADV = [("zxoL3ZMecZpbtnvmiog5","Advisor 1"),("z0phvZrHszEiFz2ncUSi","Advisor 2"),
        ("ZLjQS4KP9lqRPRjqVKNl","Advisor 3"),("Fn5K8TNhVk7kmQn2ByZb","Advisor 4"),
@@ -60,6 +62,13 @@ def main():
         n += 1
         try: api("POST","/contacts/"+cid+"/tags",{"tags":["scuderia-web","meta-ads","preview-richiesta"]})
         except Exception: pass
+        # crea la card opportunita' nel board 03_BROAD (come i lead Tally) -> visibile e assegnata
+        try:
+            nome = ((d.get("firstName","") or "")+" "+(d.get("lastName","") or "")).strip() or (d.get("companyName") or "Lead Meta")
+            api("POST","/opportunities/",{"locationId":LOC,"pipelineId":PIPELINE,"pipelineStageId":STAGE,
+                "name":nome,"status":"open","contactId":cid,"assignedTo":aid,"monetaryValue":997})
+        except Exception as e:
+            print("WARN opp", cid, e)
         note = ("\U0001F7E1 Nuovo lead Meta Ads - Scuderia Web (Preview sito)\n"
                 "Nome: %s %s\nTel/WhatsApp: %s\nEmail: %s\nFonte: %s\nAssegnato a: %s (round-robin)\n"
                 "Richiesta: Preview gratuita - contattare entro poche ore su WhatsApp." %
