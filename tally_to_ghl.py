@@ -68,6 +68,18 @@ def main():
             except Exception as e: print("err create",sid,e); continue
             if not cid: continue
         n+=1
+        # campi strutturati + opportunita' in pipeline 03_BROAD
+        try:
+            upd={}
+            if att: upd["companyName"]=att
+            if citta: upd["customFields"]=[{"id":"MixbsmkeQaCcDkLKNwLC","value":citta}]
+            if upd: ghl("PUT","/contacts/"+cid,upd)
+        except Exception: pass
+        try:
+            ghl("POST","/opportunities/",{"pipelineId":"7Zudd2lv0jtbqFHrfjiL","locationId":LOC,
+                "name":(att or fn)+" - Preview sito","pipelineStageId":"c99cb342-f7de-4258-b2db-490ad37921ce",
+                "status":"open","contactId":cid,"assignedTo":aid,"monetaryValue":997})
+        except Exception: pass
         note=("\U0001F7E1 Nuovo lead Meta Ads - Scuderia Web (Preview sito)\n"
               "Attivita': %s\nCitta': %s\nTipo: %s\nHa gia' un sito: %s\nTel/WhatsApp: %s\nEmail: %s\n"
               "Assegnato a: %s (round-robin)\nRichiesta: Preview gratuita - contattare entro poche ore su WhatsApp."%(att or "-",citta or "-",tipo or "-",sito or "-",phone or "-",email or "-",an))
