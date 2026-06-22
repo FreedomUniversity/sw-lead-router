@@ -68,7 +68,7 @@ def main():
         except Exception: pass
         try:
             import datetime as _dt
-            due = (_dt.datetime.utcnow()+_dt.timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            due = (_dt.datetime.now(_dt.timezone.utc)+_dt.timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
             api("POST","/contacts/"+cid+"/tasks",{"title":"\U0001F4DE Contatta lead preview: "+(d.get("firstName","") or "nuovo lead"),
                 "body":"Lead Meta Preview Scuderia - contatta su WhatsApp entro 2h. Tel: "+(d.get("phone","-")),
                 "dueDate":due,"assignedTo":aid,"completed":False})

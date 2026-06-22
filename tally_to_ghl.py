@@ -86,7 +86,7 @@ def main():
         try: ghl("POST","/contacts/"+cid+"/notes",{"body":note,"userId":aid})
         except Exception: pass
         try:
-            due=(datetime.datetime.utcnow()+datetime.timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            due=(datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
             ghl("POST","/contacts/"+cid+"/tasks",{"title":"\U0001F4DE Contatta lead preview: "+(att or fn),"body":"Lead Meta Preview - WhatsApp entro 2h. Tel: "+(phone or "-"),"dueDate":due,"assignedTo":aid,"completed":False})
         except Exception: pass
         print("PROCESSATO", fn, "|", att, "->", an, "| cid", cid)
