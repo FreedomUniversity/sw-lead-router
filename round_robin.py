@@ -56,7 +56,7 @@ def main():
         if not any(m in src or m in tg for m in SRC): continue
         aid, an = ADV[h(cid) % len(ADV)]
         try:
-            api("PUT","/contacts/"+cid,{"assignedTo":aid})
+            api("PUT","/contacts/"+cid,{"assignedTo":aid,"source":"Candidatura Facebook"})
         except Exception as e:
             print("ERR assign", cid, e); continue
         n += 1
