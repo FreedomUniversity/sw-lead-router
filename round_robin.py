@@ -17,7 +17,7 @@ GATE_MS = 1782079191767  # solo lead creati dopo il go-live: protegge gli 8800+ 
 ADV = [("zxoL3ZMecZpbtnvmiog5","Advisor 1"),("z0phvZrHszEiFz2ncUSi","Advisor 2"),
        ("ZLjQS4KP9lqRPRjqVKNl","Advisor 3"),("Fn5K8TNhVk7kmQn2ByZb","Advisor 4"),
        ("DBp0ZYtxaGT476FFm6H1","Advisor 5")]
-SRC = ["facebook","instagram","meta","preview","lead ad","leadconnector","ig "]
+SRC = ["facebook","instagram","meta","preview","lead ad","leadconnector","ig ","whatsapp","candidatura facebook","click to whatsapp","ctwa"]
 H = {"Authorization":"Bearer "+TOKEN,"Version":"2021-07-28","Content-Type":"application/json",
      "Accept":"application/json","User-Agent":"Mozilla/5.0 ScuderiaRR/2.0"}
 
