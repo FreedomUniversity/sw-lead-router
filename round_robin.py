@@ -55,8 +55,11 @@ def main():
         src = (d.get("source") or "").lower(); tg = " ".join(d.get("tags") or []).lower()
         if not any(m in src or m in tg for m in SRC): continue
         aid, an = ADV[h(cid) % len(ADV)]
+        # normalizza il source dei soli lead Meta grezzi; lascia intatti i source descrittivi (es. generatore self-serve)
+        cur_src = (d.get("source") or "").strip()
+        new_src = "Candidatura Facebook" if cur_src.lower() in ("", "facebook", "instagram", "meta") else cur_src
         try:
-            api("PUT","/contacts/"+cid,{"assignedTo":aid,"source":"Candidatura Facebook"})
+            api("PUT","/contacts/"+cid,{"assignedTo":aid,"source":new_src})
         except Exception as e:
             print("ERR assign", cid, e); continue
         n += 1
