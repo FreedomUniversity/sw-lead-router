@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bridge Tally -> GHL (upsert): legge le submission Preview, crea/aggiorna il contatto in GHL,
 assegna round-robin ai 5 advisor, tag + nota + task. Idempotente via tag 'preview-richiesta'."""
-import os, json, urllib.request, urllib.parse, datetime, hashlib, time
+import os, json, urllib.request, urllib.parse, urllib.error, datetime, hashlib, time
 GHL_TOKEN = os.environ.get("GHL_TOKEN") or open(os.path.expanduser("~/.config/ghl-token")).read().strip()
 TALLY_TOKEN = os.environ.get("TALLY_TOKEN") or open(os.path.expanduser("~/.config/tally-token")).read().strip()
 def _meta_token():
@@ -11,7 +11,7 @@ def _meta_token():
     if os.path.exists(pth): return open(pth).read().split("SCUDERIA_META_TOKEN=")[1].split("\n")[0].strip()
     return ""
 META_TOKEN=_meta_token(); PIXEL="2001875973748821"
-LOC="HzkPpPNCqGDplfXVJAer"; FORM="zxgW1M"; GATE_MS=1782083269955
+LOC="HzkPpPNCqGDplfXVJAer"; FORM=os.environ.get("TALLY_FORM_ID","zxgW1M"); GATE_MS=1782083269955
 ADV=[("zxoL3ZMecZpbtnvmiog5","Advisor 1"),("z0phvZrHszEiFz2ncUSi","Advisor 2"),
      ("ZLjQS4KP9lqRPRjqVKNl","Advisor 3"),("Fn5K8TNhVk7kmQn2ByZb","Advisor 4"),("DBp0ZYtxaGT476FFm6H1","Advisor 5")]
 UA="Mozilla/5.0 (Macintosh) ScuderiaBridge/2.0"
@@ -42,7 +42,13 @@ def fire_capi(email, phone, att):
     try: urllib.request.urlopen(r,timeout=20)
     except Exception: pass
 def main():
-    try: data=req("https://api.tally.so/forms/%s/submissions?limit=50"%FORM, TALLY_TOKEN)
+    try:
+        data=req("https://api.tally.so/forms/%s/submissions?limit=50"%FORM, TALLY_TOKEN)
+    except urllib.error.HTTPError as e:
+        # Form dismesso/rinominato: skip PULITO (niente rumore a ogni run). I lead ora arrivano
+        # da /crea + Meta lead ads. Per riattivare un form Tally: imposta TALLY_FORM_ID.
+        if e.code==404: print("tally: form %s non trovato (dismesso) - skip. Imposta TALLY_FORM_ID per riattivare."%FORM); return
+        print("ERR tally", e); return
     except Exception as e: print("ERR tally", e); return
     qmap={q.get("id"):(q.get("title") or "").lower() for q in data.get("questions",[])}
     n=0
