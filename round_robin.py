@@ -54,6 +54,9 @@ def main():
         if d.get("assignedTo"): continue
         src = (d.get("source") or "").lower(); tg = " ".join(d.get("tags") or []).lower()
         if not any(m in src or m in tg for m in SRC): continue
+        # distingue i lead self-serve (sito generato dal cliente dalle ADV) dai lead Meta grezzi:
+        # NON vanno etichettati "meta-ads"/"preview" o inquinano l'attribuzione Meta.
+        is_selfserve = ("generatore" in src) or ("generatore" in tg) or ("self-serve" in src) or ("self-serve" in tg)
         aid, an = ADV[h(cid) % len(ADV)]
         # normalizza il source dei soli lead Meta grezzi; lascia intatti i source descrittivi (es. generatore self-serve)
         cur_src = (d.get("source") or "").strip()
@@ -63,7 +66,8 @@ def main():
         except Exception as e:
             print("ERR assign", cid, e); continue
         n += 1
-        try: api("POST","/contacts/"+cid+"/tags",{"tags":["scuderia-web","meta-ads","preview-richiesta"]})
+        add_tags = ["scuderia-web","self-serve","sito-generato"] if is_selfserve else ["scuderia-web","meta-ads","preview-richiesta"]
+        try: api("POST","/contacts/"+cid+"/tags",{"tags":add_tags})
         except Exception: pass
         # crea la card opportunita' nel board 03_ADV (pipeline dedicata Meta ADS) -> visibile e assegnata
         try:
@@ -72,17 +76,24 @@ def main():
                 "name":nome,"status":"open","contactId":cid,"assignedTo":aid,"monetaryValue":997})
         except Exception as e:
             print("WARN opp", cid, e)
-        note = ("\U0001F7E1 Nuovo lead Meta Ads - Scuderia Web (Preview sito)\n"
-                "Nome: %s %s\nTel/WhatsApp: %s\nEmail: %s\nFonte: %s\nAssegnato a: %s (round-robin)\n"
-                "Richiesta: Preview gratuita - contattare entro poche ore su WhatsApp." %
-                (d.get("firstName",""), d.get("lastName",""), d.get("phone","-"), d.get("email","-"), d.get("source","-"), an))
+        if is_selfserve:
+            titolo_note = "\U0001F7E2 Nuovo lead self-serve - Scuderia Web (sito generato dal cliente)"
+            richiesta = "Richiesta: ha generato il proprio sito dalle ADV e lasciato i contatti - ricontattare e presentare il sito."
+        else:
+            titolo_note = "\U0001F7E1 Nuovo lead Meta Ads - Scuderia Web (Preview sito)"
+            richiesta = "Richiesta: Preview gratuita - contattare entro poche ore su WhatsApp."
+        note = ("%s\n"
+                "Nome: %s %s\nTel/WhatsApp: %s\nEmail: %s\nFonte: %s\nAssegnato a: %s (round-robin)\n%s" %
+                (titolo_note, d.get("firstName",""), d.get("lastName",""), d.get("phone","-"), d.get("email","-"), d.get("source","-"), an, richiesta))
         try: api("POST","/contacts/"+cid+"/notes",{"body":note,"userId":aid})
         except Exception: pass
         try:
             import datetime as _dt
             due = (_dt.datetime.now(_dt.timezone.utc)+_dt.timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-            api("POST","/contacts/"+cid+"/tasks",{"title":"\U0001F4DE Contatta lead preview: "+(d.get("firstName","") or "nuovo lead"),
-                "body":"Lead Meta Preview Scuderia - contatta su WhatsApp entro 2h. Tel: "+(d.get("phone","-")),
+            task_title = ("\U0001F4DE Contatta lead self-serve: " if is_selfserve else "\U0001F4DE Contatta lead preview: ") + (d.get("firstName","") or "nuovo lead")
+            task_body = ("Lead self-serve Scuderia (sito generato dal cliente) - contatta su WhatsApp entro 2h. Tel: " if is_selfserve else "Lead Meta Preview Scuderia - contatta su WhatsApp entro 2h. Tel: ") + (d.get("phone","-"))
+            api("POST","/contacts/"+cid+"/tasks",{"title":task_title,
+                "body":task_body,
                 "dueDate":due,"assignedTo":aid,"completed":False})
         except Exception: pass
         print("ASSEGNATO", d.get("firstName",""), cid, "->", an)
